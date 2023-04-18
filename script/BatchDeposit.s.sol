@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 
 import {BatchDeposit} from "../src/BatchDeposit.sol";
 
-contract CounterScript is Script {
+contract BatchDepositScript is Script {
     function setUp() public {}
 
     function run() public {
