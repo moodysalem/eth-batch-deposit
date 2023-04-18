@@ -9,6 +9,6 @@ contract BatchDepositScript is Script {
     function run() public {
         vm.broadcast();
 
-        new BatchDeposit{salt: bytes32(0)}();
+        new BatchDeposit();
     }
 }
