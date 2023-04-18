@@ -236,24 +236,32 @@ function App() {
       style={{
         display: "flex",
         height: "100vh",
-        width: "100vw",
         alignItems: "center",
         justifyContent: "center",
+        flexDirection: "column",
       }}
     >
-      <label>
-        Select deposit data file
-        <input
-          type="file"
-          multiple={false}
-          onChange={processFiles}
-          accept={".json"}
-        />
-      </label>
+      <div style={{ maxWidth: 600, padding: 12 }}>
+        <h1>Batch deposit tool</h1>
+        <label>
+          <h5>1. Select deposit data file</h5>
+          <input
+            type="file"
+            multiple={false}
+            onChange={processFiles}
+            accept={".json"}
+          />
+        </label>
 
-      <button onClick={callBatchDeposit}>Do batch deposit</button>
-
-      <ConnectButton />
+        <div>
+          <h5>2. Execute the batch deposit</h5>
+          <button disabled={!calldata} onClick={callBatchDeposit}>
+            Send transaction
+          </button>
+          <hr />
+          <ConnectButton />
+        </div>
+      </div>
     </div>
   );
 }
