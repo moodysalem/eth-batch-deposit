@@ -6,15 +6,15 @@ import {
   ContainerType,
   fromHexString,
   toHexString,
-  UintBigintType,
+  UintNumberType,
 } from "@chainsafe/ssz";
-import { useContract, useSigner } from "wagmi";
+import { useAccount, useContract, useSigner } from "wagmi";
 import { BigNumber } from "ethers";
 
 export const Bytes32 = new ByteVectorType(32);
 export const Bytes48 = new ByteVectorType(48);
 export const Bytes96 = new ByteVectorType(96);
-export const UintBn64 = new UintBigintType(8);
+export const Uint64 = new UintNumberType(8);
 export const BLSPubkey = Bytes48;
 
 export const BLSSignature = Bytes96;
@@ -23,7 +23,7 @@ export const DepositData = new ContainerType(
   {
     pubkey: BLSPubkey,
     withdrawalCredentials: Bytes32,
-    amount: UintBn64,
+    amount: Uint64,
     signature: BLSSignature,
   },
   { typeName: "DepositData", jsonCase: "eth2" }
@@ -32,7 +32,7 @@ export const DepositData = new ContainerType(
 function computeDepositDataRoot(depositData: {
   pubkey: Uint8Array;
   withdrawal_credentials: Uint8Array;
-  amount: bigint;
+  amount: number;
   signature: Uint8Array;
 }): `0x${string}` {
   return toHexString(
@@ -176,6 +176,7 @@ type DepositDataJson = Array<{
 }>;
 
 function App() {
+  const { isConnected } = useAccount();
   const [calldata, setCalldata] = useState<BatchDepositCallData | null>(null);
 
   const processFiles: ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -189,7 +190,7 @@ function App() {
             computeDepositDataRoot({
               pubkey: fromHexString(pubkey),
               withdrawal_credentials: fromHexString(withdrawal_credentials),
-              amount: BigInt(amount), // 32 ETH
+              amount: Number(amount), // 32 ETH
               signature: fromHexString(signature),
             })
         );
@@ -255,7 +256,10 @@ function App() {
 
         <div>
           <h5>2. Execute the batch deposit</h5>
-          <button disabled={!calldata} onClick={callBatchDeposit}>
+          <button
+            disabled={!calldata || !isConnected}
+            onClick={callBatchDeposit}
+          >
             Send transaction
           </button>
           <hr />
