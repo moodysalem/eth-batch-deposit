@@ -11,7 +11,6 @@ contract BatchDeposit {
     uint32 public constant SIGNATURE_LENGTH = 96;
     uint32 public constant CREDENTIALS_LENGTH = 32;
     uint8 public constant MAX_VALIDATORS = 100;
-
     uint256 public constant DEPOSIT_AMOUNT = 32 ether;
 
     /**
