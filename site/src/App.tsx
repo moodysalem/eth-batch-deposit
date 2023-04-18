@@ -1,58 +1,65 @@
 import React, { ChangeEventHandler, useCallback } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-const { ContainerType } = require("@chainsafe/ssz");
+import { ContainerType, fromHexString, toHexString } from "@chainsafe/ssz";
+import {
+  ByteVectorType,
+  UintNumberType,
+  UintBigintType,
+  BooleanType,
+} from "@chainsafe/ssz";
 
-// Define the DepositData type
-const DepositDataType = new ContainerType({
-  fields: {
-    pubkey: "bytes48",
-    withdrawal_credentials: "bytes32",
-    amount: "uint64",
-    signature: "bytes96",
+export const Bytes32 = new ByteVectorType(32);
+export const Bytes48 = new ByteVectorType(48);
+export const Bytes96 = new ByteVectorType(96);
+export const UintBn64 = new UintBigintType(8);
+export const BLSPubkey = Bytes48;
+
+export const BLSSignature = Bytes96;
+
+export const DepositData = new ContainerType(
+  {
+    pubkey: BLSPubkey,
+    withdrawalCredentials: Bytes32,
+    amount: UintBn64,
+    signature: BLSSignature,
   },
-});
-
-// Compute the deposit_data_root
-function toUint8Array(hexString: string): Uint8Array {
-  return new Uint8Array(hexString.match(/../g)!.map((h) => parseInt(h, 16)));
-}
-
-// Compute the deposit_data_root
-function toHexString(buffer: ArrayBuffer): string {
-  return [...new Uint8Array(buffer)]
-    .map((x) => x.toString(16).padStart(2, "0"))
-    .join("");
-}
+  { typeName: "DepositData", jsonCase: "eth2" }
+);
 
 async function computeDepositDataRoot(depositData: {
   pubkey: Uint8Array;
   withdrawal_credentials: Uint8Array;
-  amount: BigInt;
+  amount: bigint;
   signature: Uint8Array;
 }): Promise<string> {
-  const encodedDepositData = DepositDataType.serialize(depositData);
-  return toHexString(await crypto.subtle.digest("SHA-256", encodedDepositData));
+  const encodedDepositData = DepositData.serialize({
+    pubkey: depositData.pubkey,
+    amount: depositData.amount,
+    signature: depositData.signature,
+    withdrawalCredentials: depositData.withdrawal_credentials,
+  });
+  const result = await crypto.subtle.digest("SHA-256", encodedDepositData);
+
+  return toHexString([...new Uint8Array(result)]);
 }
 
 function App() {
   const processFiles: ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       const fr = new FileReader();
-      fr.addEventListener("load", () => {
+      fr.addEventListener("load", async () => {
         const parsed = JSON.parse(fr.result!.toString());
 
         const data = (parsed as any).map(
           ({ pubkey, withdrawal_credentials, amount, signature }: any) => ({
-            pubkey: toUint8Array(pubkey),
-            withdrawal_credentials: toUint8Array(withdrawal_credentials),
+            pubkey: fromHexString(pubkey),
+            withdrawal_credentials: fromHexString(withdrawal_credentials),
             amount: BigInt(amount), // 32 ETH
-            signature: toUint8Array(signature),
+            signature: fromHexString(signature),
           })
         );
-        const roots = data.map(computeDepositDataRoot);
-
-        console.log(roots);
+        const roots = await Promise.all(data.map(computeDepositDataRoot));
       });
       fr.readAsText(e.target.files![0]);
     },
