@@ -173,6 +173,7 @@ type DepositDataJson = Array<{
   withdrawal_credentials: string;
   amount: string;
   signature: string;
+  deposit_data_root: string;
 }>;
 
 function App() {
@@ -194,6 +195,14 @@ function App() {
               signature: fromHexString(signature),
             })
         );
+
+        if (
+          !deposit_data_roots.every(
+            (root, i) => root === `0x${parsed[i].deposit_data_root}`
+          )
+        ) {
+          throw new Error("Deposit data roots did not match up");
+        }
 
         setCalldata({
           deposit_data_roots,
