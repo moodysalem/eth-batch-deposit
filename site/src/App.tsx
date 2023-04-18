@@ -1,7 +1,5 @@
 import React, { ChangeEventHandler, useCallback, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-
-import { fromHexString } from "@chainsafe/ssz";
 import { useAccount, useContract, useSigner } from "wagmi";
 import { BigNumber } from "ethers";
 
