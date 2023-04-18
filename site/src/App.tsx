@@ -1,49 +1,9 @@
 import React, { ChangeEventHandler, useCallback, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-import {
-  ByteVectorType,
-  ContainerType,
-  fromHexString,
-  toHexString,
-  UintBigintType,
-} from "@chainsafe/ssz";
+import { fromHexString } from "@chainsafe/ssz";
 import { useAccount, useContract, useSigner } from "wagmi";
 import { BigNumber } from "ethers";
-
-export const Bytes32 = new ByteVectorType(32);
-export const Bytes48 = new ByteVectorType(48);
-export const Bytes96 = new ByteVectorType(96);
-export const UintBn64 = new UintBigintType(8);
-export const BLSPubkey = Bytes48;
-
-export const BLSSignature = Bytes96;
-
-export const DepositData = new ContainerType(
-  {
-    pubkey: BLSPubkey,
-    withdrawalCredentials: Bytes32,
-    amount: UintBn64,
-    signature: BLSSignature,
-  },
-  { typeName: "DepositData", jsonCase: "eth2" }
-);
-
-function computeDepositDataRoot(depositData: {
-  pubkey: Uint8Array;
-  withdrawal_credentials: Uint8Array;
-  amount: bigint;
-  signature: Uint8Array;
-}): `0x${string}` {
-  return toHexString(
-    DepositData.hashTreeRoot({
-      pubkey: depositData.pubkey,
-      amount: depositData.amount,
-      signature: depositData.signature,
-      withdrawalCredentials: depositData.withdrawal_credentials,
-    })
-  ) as `0x${string}`;
-}
 
 function useBatchDepositContract() {
   const { data: signer } = useSigner({ chainId: 1 });
@@ -186,26 +146,10 @@ function App() {
       fr.addEventListener("load", async () => {
         const parsed = JSON.parse(fr.result!.toString()) as DepositDataJson;
 
-        const deposit_data_roots: `0x${string}`[] = parsed.map(
-          ({ pubkey, withdrawal_credentials, amount, signature }) =>
-            computeDepositDataRoot({
-              pubkey: fromHexString(pubkey),
-              withdrawal_credentials: fromHexString(withdrawal_credentials),
-              amount: BigInt(amount), // 32 ETH
-              signature: fromHexString(signature),
-            })
-        );
-
-        if (
-          !deposit_data_roots.every(
-            (root, i) => root === `0x${parsed[i].deposit_data_root}`
-          )
-        ) {
-          throw new Error("Deposit data roots did not match up");
-        }
-
         setCalldata({
-          deposit_data_roots,
+          deposit_data_roots: parsed.map(
+            (p): `0x${string}` => `0x${p.deposit_data_root}`
+          ),
           signatures: `0x${parsed.map((p) => p.signature).join("")}`,
           pubkeys: `0x${parsed.map((p) => p.pubkey).join("")}`,
           withdrawal_credentials: `0x${parsed
