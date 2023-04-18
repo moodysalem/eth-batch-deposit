@@ -10,6 +10,4 @@ contract BatchDepositTest is Test {
     function setUp() public {
         batchDeposit = new BatchDeposit();
     }
-
-    function testIncrement() public {}
 }

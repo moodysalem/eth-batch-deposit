@@ -6,13 +6,9 @@ import {Script} from "forge-std/Script.sol";
 import {BatchDeposit} from "../src/BatchDeposit.sol";
 
 contract BatchDepositScript is Script {
-    function setUp() public {}
-
     function run() public {
-        vm.startBroadcast();
+        vm.broadcast();
 
-        BatchDeposit bd = new BatchDeposit();
-
-        vm.stopBroadcast();
+        new BatchDeposit{salt: bytes32(0)}();
     }
 }
