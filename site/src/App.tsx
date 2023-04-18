@@ -6,7 +6,7 @@ import {
   ContainerType,
   fromHexString,
   toHexString,
-  UintNumberType,
+  UintBigintType,
 } from "@chainsafe/ssz";
 import { useAccount, useContract, useSigner } from "wagmi";
 import { BigNumber } from "ethers";
@@ -14,7 +14,7 @@ import { BigNumber } from "ethers";
 export const Bytes32 = new ByteVectorType(32);
 export const Bytes48 = new ByteVectorType(48);
 export const Bytes96 = new ByteVectorType(96);
-export const Uint64 = new UintNumberType(8);
+export const UintBn64 = new UintBigintType(8);
 export const BLSPubkey = Bytes48;
 
 export const BLSSignature = Bytes96;
@@ -23,7 +23,7 @@ export const DepositData = new ContainerType(
   {
     pubkey: BLSPubkey,
     withdrawalCredentials: Bytes32,
-    amount: Uint64,
+    amount: UintBn64,
     signature: BLSSignature,
   },
   { typeName: "DepositData", jsonCase: "eth2" }
@@ -32,7 +32,7 @@ export const DepositData = new ContainerType(
 function computeDepositDataRoot(depositData: {
   pubkey: Uint8Array;
   withdrawal_credentials: Uint8Array;
-  amount: number;
+  amount: bigint;
   signature: Uint8Array;
 }): `0x${string}` {
   return toHexString(
@@ -190,7 +190,7 @@ function App() {
             computeDepositDataRoot({
               pubkey: fromHexString(pubkey),
               withdrawal_credentials: fromHexString(withdrawal_credentials),
-              amount: Number(amount), // 32 ETH
+              amount: BigInt(amount), // 32 ETH
               signature: fromHexString(signature),
             })
         );
