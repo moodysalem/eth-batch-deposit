@@ -1,12 +1,12 @@
 import React, { ChangeEventHandler, useCallback, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-import { ContainerType, fromHexString, toHexString } from "@chainsafe/ssz";
 import {
   ByteVectorType,
-  UintNumberType,
+  ContainerType,
+  fromHexString,
+  toHexString,
   UintBigintType,
-  BooleanType,
 } from "@chainsafe/ssz";
 import { useContract, useSigner } from "wagmi";
 import { BigNumber } from "ethers";
