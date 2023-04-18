@@ -46,17 +46,23 @@ contract BatchDeposit {
 
         require(
             signatures.length % SIGNATURE_LENGTH == 0,
-            "BatchDeposit: Invalid signature length"
+            "BatchDeposit: Invalid signature length mod"
         );
 
         require(
-            withdrawal_credentials.length == CREDENTIALS_LENGTH,
+            withdrawal_credentials.length >= CREDENTIALS_LENGTH,
             "BatchDeposit: Invalid withdrawal_credentials length"
+        );
+
+        require(
+            withdrawal_credentials.length % CREDENTIALS_LENGTH == 0,
+            "BatchDeposit: Invalid withdrawal_credentials length mod"
         );
 
         uint32 pubkeyCount = uint32(pubkeys.length / PUBKEY_LENGTH);
         require(
             pubkeyCount == signatures.length / SIGNATURE_LENGTH &&
+                pubkeyCount == withdrawal_credentials / CREDENTIALS_LENGTH &&
                 pubkeyCount == deposit_data_roots.length,
             "BatchDeposit: Data counts don't match"
         );
@@ -74,10 +80,14 @@ contract BatchDeposit {
             bytes memory signature = bytes(
                 signatures[i * SIGNATURE_LENGTH:(i + 1) * SIGNATURE_LENGTH]
             );
+            bytes memory credential = bytes(
+                withdrawal_credentials[i * CREDENTIALS_LENGTH:(i + 1) *
+                    CREDENTIALS_LENGTH]
+            );
 
             DEPOSIT_CONTRACT.deposit{value: DEPOSIT_AMOUNT}(
                 pubkey,
-                withdrawal_credentials,
+                credential,
                 signature,
                 deposit_data_roots[i]
             );
