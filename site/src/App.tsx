@@ -10,81 +10,43 @@ function useBatchDepositContract() {
     abi: [
       {
         inputs: [],
-        name: "CREDENTIALS_LENGTH",
-        outputs: [
-          {
-            internalType: "uint32",
-            name: "",
-            type: "uint32",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "AmountTooLow",
+        type: "error",
       },
       {
         inputs: [],
-        name: "DEPOSIT_AMOUNT",
-        outputs: [
-          {
-            internalType: "uint256",
-            name: "",
-            type: "uint256",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "AtLeastOneValidator",
+        type: "error",
       },
       {
         inputs: [],
-        name: "DEPOSIT_CONTRACT",
-        outputs: [
-          {
-            internalType: "contract IDepositContract",
-            name: "",
-            type: "address",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "CountsDoNotMatch",
+        type: "error",
       },
       {
         inputs: [],
-        name: "MAX_VALIDATORS",
-        outputs: [
-          {
-            internalType: "uint8",
-            name: "",
-            type: "uint8",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "InvalidPubKeyLength",
+        type: "error",
       },
       {
         inputs: [],
-        name: "PUBKEY_LENGTH",
-        outputs: [
-          {
-            internalType: "uint32",
-            name: "",
-            type: "uint32",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "InvalidSignatureLength",
+        type: "error",
       },
       {
         inputs: [],
-        name: "SIGNATURE_LENGTH",
-        outputs: [
-          {
-            internalType: "uint32",
-            name: "",
-            type: "uint32",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
+        name: "InvalidWithdrawalCredentialsLength",
+        type: "error",
+      },
+      {
+        inputs: [],
+        name: "InvaligMessageValue",
+        type: "error",
+      },
+      {
+        inputs: [],
+        name: "MaxValidatorsExceeded",
+        type: "error",
       },
       {
         inputs: [
