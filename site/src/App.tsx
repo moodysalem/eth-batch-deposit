@@ -158,7 +158,7 @@ function useBatchDepositContract() {
         type: "function",
       },
     ],
-    address: "0x4e59b44847b379578588920ca78fbf26c0b4956c",
+    address: "0x35B3526293c56669f072835bf247Cb7BDBA3Abe1",
   });
 }
 
