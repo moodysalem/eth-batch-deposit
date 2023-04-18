@@ -29,21 +29,20 @@ export const DepositData = new ContainerType(
   { typeName: "DepositData", jsonCase: "eth2" }
 );
 
-async function computeDepositDataRoot(depositData: {
+function computeDepositDataRoot(depositData: {
   pubkey: Uint8Array;
   withdrawal_credentials: Uint8Array;
   amount: bigint;
   signature: Uint8Array;
-}): Promise<`0x${string}`> {
-  const encodedDepositData = DepositData.serialize({
-    pubkey: depositData.pubkey,
-    amount: depositData.amount,
-    signature: depositData.signature,
-    withdrawalCredentials: depositData.withdrawal_credentials,
-  });
-  const result = await crypto.subtle.digest("SHA-256", encodedDepositData);
-
-  return toHexString([...new Uint8Array(result)]) as `0x${string}`;
+}): `0x${string}` {
+  return toHexString(
+    DepositData.hashTreeRoot({
+      pubkey: depositData.pubkey,
+      amount: depositData.amount,
+      signature: depositData.signature,
+      withdrawalCredentials: depositData.withdrawal_credentials,
+    })
+  ) as `0x${string}`;
 }
 
 function useBatchDepositContract() {
@@ -185,15 +184,14 @@ function App() {
       fr.addEventListener("load", async () => {
         const parsed = JSON.parse(fr.result!.toString()) as DepositDataJson;
 
-        const deposit_data_roots: `0x${string}`[] = await Promise.all(
-          parsed.map(({ pubkey, withdrawal_credentials, amount, signature }) =>
+        const deposit_data_roots: `0x${string}`[] = parsed.map(
+          ({ pubkey, withdrawal_credentials, amount, signature }) =>
             computeDepositDataRoot({
               pubkey: fromHexString(pubkey),
               withdrawal_credentials: fromHexString(withdrawal_credentials),
               amount: BigInt(amount), // 32 ETH
               signature: fromHexString(signature),
             })
-          )
         );
 
         setCalldata({
