@@ -62,7 +62,8 @@ contract BatchDeposit {
         uint32 pubkeyCount = uint32(pubkeys.length / PUBKEY_LENGTH);
         require(
             pubkeyCount == signatures.length / SIGNATURE_LENGTH &&
-                pubkeyCount == withdrawal_credentials / CREDENTIALS_LENGTH &&
+                pubkeyCount ==
+                withdrawal_credentials.length / CREDENTIALS_LENGTH &&
                 pubkeyCount == deposit_data_roots.length,
             "BatchDeposit: Data counts don't match"
         );
