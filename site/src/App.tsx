@@ -1,85 +1,84 @@
 import React, { ChangeEventHandler, useCallback, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useContract, useSigner } from "wagmi";
+import {
+  useAccount,
+  useContractWrite,
+  usePrepareContractWrite,
+  useSigner,
+} from "wagmi";
 import { BigNumber } from "ethers";
 
-function useBatchDepositContract() {
-  const { data: signer } = useSigner({ chainId: 1 });
-  return useContract({
-    signerOrProvider: signer,
-    abi: [
+const BATCH_DEPOSIT_ABI = [
+  {
+    inputs: [],
+    name: "AmountTooLow",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "AtLeastOneValidator",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "CountsDoNotMatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidPubKeyLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidSignatureLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidWithdrawalCredentialsLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvaligMessageValue",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "MaxValidatorsExceeded",
+    type: "error",
+  },
+  {
+    inputs: [
       {
-        inputs: [],
-        name: "AmountTooLow",
-        type: "error",
+        internalType: "bytes",
+        name: "pubkeys",
+        type: "bytes",
       },
       {
-        inputs: [],
-        name: "AtLeastOneValidator",
-        type: "error",
+        internalType: "bytes",
+        name: "withdrawal_credentials",
+        type: "bytes",
       },
       {
-        inputs: [],
-        name: "CountsDoNotMatch",
-        type: "error",
+        internalType: "bytes",
+        name: "signatures",
+        type: "bytes",
       },
       {
-        inputs: [],
-        name: "InvalidPubKeyLength",
-        type: "error",
-      },
-      {
-        inputs: [],
-        name: "InvalidSignatureLength",
-        type: "error",
-      },
-      {
-        inputs: [],
-        name: "InvalidWithdrawalCredentialsLength",
-        type: "error",
-      },
-      {
-        inputs: [],
-        name: "InvaligMessageValue",
-        type: "error",
-      },
-      {
-        inputs: [],
-        name: "MaxValidatorsExceeded",
-        type: "error",
-      },
-      {
-        inputs: [
-          {
-            internalType: "bytes",
-            name: "pubkeys",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "withdrawal_credentials",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "signatures",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes32[]",
-            name: "deposit_data_roots",
-            type: "bytes32[]",
-          },
-        ],
-        name: "batchDeposit",
-        outputs: [],
-        stateMutability: "payable",
-        type: "function",
+        internalType: "bytes32[]",
+        name: "deposit_data_roots",
+        type: "bytes32[]",
       },
     ],
-    address: "0xcb72ba0A2ee7d10582EBC8f120435e77399f653f",
-  });
-}
+    name: "batchDeposit",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+];
+const BATCH_DEPOSIT_ADDRESS = "0xcb72ba0A2ee7d10582EBC8f120435e77399f653f";
 
 interface BatchDepositCallData {
   pubkeys: `0x${string}`;
@@ -91,7 +90,7 @@ interface BatchDepositCallData {
 type DepositDataJson = Array<{
   pubkey: string;
   withdrawal_credentials: string;
-  amount: string;
+  amount: number;
   signature: string;
   deposit_data_root: string;
 }>;
@@ -122,28 +121,38 @@ function App() {
     [setCalldata]
   );
 
-  const batchDepositContract = useBatchDepositContract();
+  const { data: signer } = useSigner({ chainId: 1 });
 
-  const callBatchDeposit = useCallback(async () => {
-    if (!calldata) throw new Error("Missing calldata");
-    if (!batchDepositContract)
-      throw new Error("Missing batch deposit contract");
+  const { config, error: prepareError } = usePrepareContractWrite({
+    abi: BATCH_DEPOSIT_ABI,
+    address: BATCH_DEPOSIT_ADDRESS,
+    functionName: "batchDeposit",
+    chainId: 1,
+    signer,
+    enabled: !!signer && !!calldata,
+    args: calldata
+      ? [
+          calldata.pubkeys,
+          calldata.withdrawal_credentials,
+          calldata.signatures,
+          calldata.deposit_data_roots,
+        ]
+      : undefined,
+    overrides: calldata
+      ? {
+          value: BigNumber.from(32)
+            .mul(BigNumber.from(10).pow(18))
+            .mul(calldata.deposit_data_roots.length),
+        }
+      : {},
+  });
 
-    console.log(calldata);
-
-    const result = await batchDepositContract.batchDeposit(
-      calldata.pubkeys,
-      calldata.withdrawal_credentials,
-      calldata.signatures,
-      calldata.deposit_data_roots,
-      {
-        value: BigNumber.from(32)
-          .mul(BigNumber.from(10).pow(18))
-          .mul(calldata.deposit_data_roots.length),
-      }
-    );
-    console.log(result.hash);
-  }, [batchDepositContract, calldata]);
+  const {
+    write: batchDeposit,
+    data: transaction,
+    isLoading,
+    isIdle,
+  } = useContractWrite(config);
 
   return (
     <div
@@ -170,13 +179,16 @@ function App() {
         <div>
           <h5>2. Execute the batch deposit</h5>
           <button
-            disabled={!calldata || !isConnected}
-            onClick={callBatchDeposit}
+            disabled={!calldata || !isConnected || !isIdle || !!prepareError}
+            onClick={batchDeposit}
           >
-            Send transaction
+            {isLoading ? "Loading..." : "Send batch deposit"}
           </button>
+
+          <div>{prepareError?.message}</div>
           <hr />
-          <ConnectButton />
+
+          <ConnectButton showBalance={false} />
         </div>
       </div>
     </div>
